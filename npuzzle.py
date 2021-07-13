@@ -1,10 +1,12 @@
 import random
-import math
+import time
 
-_goal_state = [[1, 2, 3, 4],
-               [5, 6, 7, 8],
-               [9, 10, 11, 12],
-               [13, 14, 15, 00]]
+_goal_state = [[1,2,3,4,5,6],
+               [7,8,9,10,11,12],
+               [13,14,15,16,17,18],
+               [19,20,21,22,23,24],
+               [25,26,27,28,29,30],
+               [31,32,33,34,35,0]]
                
 def index(item, seq):
     if item in seq:
@@ -12,12 +14,13 @@ def index(item, seq):
     else:
         return -1     
 class NPuzzle:
+    
     def __init__(self):
         self._hval = 0
         self._depth = 0
         self._parent = None
         self.adj_matrix = []
-        for i in range(4):
+        for i in range(6):
             self.adj_matrix.append(_goal_state[i][:])
 
     def __eq__(self, other):
@@ -28,14 +31,14 @@ class NPuzzle:
 
     def __str__(self):
         res = ''
-        for row in range(4):
+        for row in range(6):
             res += ' '.join(map(str, self.adj_matrix[row]))
             res += '\r\n'
         return res
 
     def _clone(self):
         p = NPuzzle()
-        for i in range(4):
+        for i in range(6):
             p.adj_matrix[i] = self.adj_matrix[i][:]
         return p
 
@@ -47,9 +50,9 @@ class NPuzzle:
             free.append((row - 1, col))
         if col > 0:
             free.append((row, col - 1))
-        if row < 3:
+        if row < 5:
             free.append((row + 1, col))
-        if col < 3:
+        if col < 5:
             free.append((row, col + 1))
 
         return free
@@ -97,7 +100,7 @@ class NPuzzle:
                 idx_open = index(move, openl)
                 idx_closed = index(move, closedl)
                 hval = h(move)
-                
+
                 fval = hval + move._depth
 
                 if idx_closed == -1 and idx_open == -1:
@@ -130,11 +133,11 @@ class NPuzzle:
             row, col = target
 
     def find(self, value):
-        if value < 0 or value > 16:
+        if value < 0 or value > 36:
             raise Exception("valor fora da faixa")
 
-        for row in range(4):
-            for col in range(4):
+        for row in range(6):
+            for col in range(6):
                 if self.adj_matrix[row][col] == value:
                     return row, col
     
@@ -151,15 +154,14 @@ class NPuzzle:
 
 def heur(puzzle, item_total_calc, total_calc):
     t = 0
-    for row in range(4):
-        for col in range(4):
+    for row in range(6):
+        for col in range(6):
             val = puzzle.peek(row, col) - 1
-            target_col = val % 4
-            target_row = val / 4
+            target_col = val % 6
+            target_row = val / 6
 
-            # account for 0 as blank
             if target_row < 0: 
-                target_row = 3
+                target_row = 5
 
             t += item_total_calc(row, target_row, col, target_col)
 
@@ -170,25 +172,12 @@ def h_manhattan(puzzle):
                 lambda r, tr, c, tc: abs(tr - r) + abs(tc - c),
                 lambda t : t)
 
-def h_manhattan_lsq(puzzle):
-    return heur(puzzle,
-                lambda r, tr, c, tc: (abs(tr - r) + abs(tc - c))**2,
-                lambda t: math.sqrt(t))
-
-def h_linear(puzzle):
-    return heur(puzzle,
-                lambda r, tr, c, tc: math.sqrt(math.sqrt((tr - r)**2 + (tc - c)**2)),
-                lambda t: t)
-
-def h_linear_lsq(puzzle):
-    return heur(puzzle,
-                lambda r, tr, c, tc: (tr - r)**2 + (tc - c)**2,
-                lambda t: math.sqrt(t))
-
 def h_default(puzzle):
     return 0
 
 def main():
+    inicio = time.time()
+
     p = NPuzzle()
     
     p.shuffle(22)
@@ -205,13 +194,13 @@ def main():
         print("  | ")
         print(" \\\'/ \n")
 
-    print("Resolvido com a Exploração por Distância de Manhattan", count, "estados")
-    path, count = p.solve(h_manhattan_lsq)
-    print("Resolvido com a Exploração por Mínimos Quadrados de Manhattan", count, "estados")
-    path, count = p.solve(h_linear)
-    print("Resolvido com a Exploração com Distância Linear", count, "estados")
-    path, count = p.solve(h_linear_lsq)
-    print("Resolvido com a Exploração por Mínimos Quadrados Linear", count, "estados")
+    print("Resolvido com a Exploração por Distância de Manhattan:", count, "estados")
+
+    path, count = p.solve(h_default)
+    print("Resolvido sem uso da função de avaliação:", count, "estados.")
+
+    fim = time.time()
+    print('\nTempo de execução: %.2fs\n' % (fim-inicio))
 
 if __name__ == "__main__":
     main()
